@@ -1,4 +1,5 @@
-const templates = ["template1.png", "template2.png", "template3.png"]; // update if file names berbeda
+const templates = ["template1.png", "template2.png"];
+const example = ["template1.png", "template2.png"];
 let currentIndex = 0;
 let selectedTemplate = templates[0];
 
@@ -24,7 +25,7 @@ const savedList = document.getElementById("savedList");
 
 function showCarousel(i){
   currentIndex = (i + templates.length) % templates.length;
-  carouselImg.src = "templates/" + templates[currentIndex];
+  carouselImg.src = "example/" + example[currentIndex];
   selectedTemplate = "templates/" + templates[currentIndex];
   renderExampleUsage(selectedTemplate);
 }
