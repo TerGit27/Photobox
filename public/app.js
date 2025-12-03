@@ -12,6 +12,7 @@ const nextBtn = document.getElementById("nextBtn");
 const useTemplateBtn = document.getElementById("useTemplateBtn");
 const exampleStack = document.getElementById("exampleStack");
 const backBtn = document.getElementById("backBtn");
+const mirroredBtn = document.getElementById("mirrored");
 
 const cameraVideo = document.getElementById("camera");
 const currentTemplateName = document.getElementById("currentTemplateName");
@@ -67,6 +68,10 @@ useTemplateBtn.onclick = async () => {
 backBtn.onclick = () => {
   stageCamera.classList.add("hidden");
   stageTemplate.classList.remove("hidden");
+}
+
+mirroredBtn.onclick = () => {
+  cameraVideo.classList.toggle("mirrored");
 }
 
 async function startCamera(){
@@ -258,7 +263,25 @@ function addSavedItem(publicPath, filename, dateFolder){
   del.style.marginLeft="auto";
   del.onclick = async ()=>{
     if(confirm("Hapus file dari disk?")) {
-      // INI GIMANA ANJAY GABISA NGEHAPUS FOTO GEUNINGGG???
+      del.disabled = true;
+      try {
+        const res = await fetch("/delete", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ path: publicPath })
+        });
+        const data = await res.json();
+        if(data.success){
+          alert("File dihapus");
+          item.remove();
+        } else {
+          alert("Gagal menghapus file");
+          del.disabled = false;
+        }
+      } catch(err){
+        console.error(err); alert("Error saat menghapus: "+err.message);
+        del.disabled = false;
+      }
     }
   };
 
