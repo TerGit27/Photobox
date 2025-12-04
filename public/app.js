@@ -12,7 +12,6 @@ const nextBtn = document.getElementById("nextBtn");
 const useTemplateBtn = document.getElementById("useTemplateBtn");
 const exampleStack = document.getElementById("exampleStack");
 const backBtn = document.getElementById("backBtn");
-const mirroredBtn = document.getElementById("mirrored");
 const startBtn = document.getElementById("startBtn");
 const Timer = document.getElementById("fiveMinTimer");
 
@@ -77,10 +76,6 @@ useTemplateBtn.onclick = async () => {
 backBtn.onclick = () => {
   stageCamera.classList.add("hidden");
   stageTemplate.classList.remove("hidden");
-}
-
-mirroredBtn.onclick = () => {
-  cameraVideo.classList.toggle("mirrored");
 }
 
 async function startCamera(){
@@ -270,29 +265,52 @@ function addSavedItem(publicPath, filename, dateFolder){
   const del = document.createElement("button");
   del.textContent = "Hapus";
   del.style.marginLeft="auto";
-  del.onclick = async ()=>{
-    if(confirm("Hapus file dari disk?")) {
-      del.disabled = true;
+
+  del.onclick = async ()=> {
+    if(!confirm("Hapus file dari disk?")) return;
+    del.disabled = true;
+    try {
+      // ensure we send only the pathname (e.g. /saved/2025-12-01/file.png)
+      let sendPath = publicPath;
       try {
-        const res = await fetch("/delete", {
-          method:"POST",
-          headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify({ path: publicPath })
-        });
-        const data = await res.json();
-        if(data.success){
-          alert("File dihapus");
-          item.remove();
-        } else {
-          alert("Gagal menghapus file");
-          del.disabled = false;
-        }
-      } catch(err){
-        console.error(err); alert("Error saat menghapus: "+err.message);
-        del.disabled = false;
+        // if publicPath is absolute URL, extract pathname
+        const u = new URL(publicPath, window.location.href);
+        sendPath = u.pathname;
+      } catch (e) {
+        // ignore and use raw string
       }
+
+      const res = await fetch("/delete-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: sendPath })
+      });
+
+      const contentType = res.headers.get("content-type") || "";
+      let data = null;
+      if (contentType.includes("application/json")) {
+        data = await res.json().catch(()=>null);
+      } else {
+        const text = await res.text().catch(()=>"");
+        console.warn("Non-JSON response from delete-image:", text.slice(0,200));
+      }
+
+      if (res.ok && data && data.success) {
+        item.remove();
+        console.log("Deleted:", sendPath);
+      } else {
+        const errMsg = (data && data.error) ? data.error : (res.statusText || "Unknown error");
+        alert("Gagal menghapus: " + errMsg);
+      }
+    } catch(err){
+      console.error("Delete error", err);
+      alert("Error saat menghapus: " + err.message);
+    } finally {
+      del.disabled = false;
     }
   };
+
+  console.log("Adding saved item:", publicPath, filename, dateFolder);
 
   item.appendChild(img);
   item.appendChild(meta);
@@ -301,7 +319,7 @@ function addSavedItem(publicPath, filename, dateFolder){
 }
 
 async function loadInitialSaved(){
-
+  console.log("Loading initial saved images...");
 }
 
 loadInitialSaved();
@@ -315,7 +333,7 @@ function formatTime(seconds){
   return String(m).padStart(2,'0') + ":" + String(s).padStart(2,'0');
 }
 
-function stopFiveMinuteTimer(){
+function stopTimer(){
   if(TimeInterval){
     clearInterval(TimeInterval);
     TimeInterval = null;
@@ -323,7 +341,7 @@ function stopFiveMinuteTimer(){
 }
 
 function startTimer(durationSec = 300, showAlert = true){
-  stopFiveMinuteTimer();
+  stopTimer();
   TimeRemaining = durationSec;
   const el = document.getElementById("fiveMinTimer");
   if(el) el.textContent = formatTime(TimeRemaining);
@@ -332,11 +350,13 @@ function startTimer(durationSec = 300, showAlert = true){
     TimeRemaining--;
     if(el) el.textContent = formatTime(TimeRemaining);
     if(TimeRemaining <= 0){
-      stopFiveMinuteTimer();
+      stopTimer();
       if(showAlert) alert("Waktu 5 menit telah habis");
       setTimeout(()=> {
         return window.location.reload();
       }, 5000);
+    } else if(TimeRemaining <= 10){
+      el.classList.add("timer-warning");
     }
   }, 1000);
 }

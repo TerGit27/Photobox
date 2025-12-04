@@ -156,10 +156,6 @@ video#camera{
   background:#000;
 }
 
-video#camera.mirrored{
-  -webkit-transform: scaleX(-1);
-}
-
 .side-panel{
   width:30%;
   display:flex;
@@ -273,14 +269,20 @@ video#camera.mirrored{
   box-shadow:0 6px 18px rgba(0,0,0,0.45);
   transform-origin: center;
   will-change: transform;
-  animation: scaleUp 1.2s infinite ease-in-out;
   z-index: 100;
 }
 
+.timer-warning{
+  animation: scaleUp 1.2s infinite ease-in-out;
+}
+
 @keyframes scaleUp {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
+  0% { transform: scale(1); color: #fff; }
+  50% {
+    transform: scale(1.2);
+    color: red;
+  }
+  100% { transform: scale(1); color: #fff;}
 }
 
 /* small responsiveness */

@@ -87,6 +87,71 @@ app.post("/save", (req, res) => {
   }
 });
 
+app.post('/delete-image', async (req, res) => {
+  try {
+    let publicPath = req.body.path || req.body.publicPath || "";
+
+    if (!publicPath) return res.status(400).json({ error: 'Missing path' });
+
+    // If client passed a full URL, extract pathname
+    try {
+      if (publicPath.startsWith("http://") || publicPath.startsWith("https://")) {
+        publicPath = new URL(publicPath).pathname;
+      }
+    } catch (e) {
+      // ignore URL parse errors; continue with original string
+    }
+
+    // Normalize leading slash
+    if (!publicPath.startsWith("/")) publicPath = "/" + publicPath;
+
+    // Only accept paths served under /saved
+    if (!publicPath.startsWith('/saved/')) {
+      return res.status(400).json({ error: 'Invalid public path' });
+    }
+
+    // Map public path to real filesystem path under baseOutput
+    const relPathPosix = publicPath.replace(/^\/saved\//, ''); // posix-style segments
+    const segments = relPathPosix.split('/').map(s => decodeURIComponent(s));
+    const relFsPath = path.join(...segments); // platform-specific join
+
+    const baseResolved = path.resolve(baseOutput);
+    const target = path.resolve(baseResolved, relFsPath);
+
+    // Debug log to inspect mapping (will print to server console)
+    console.log('delete-image request:', { publicPath, relFsPath, baseResolved, target });
+
+    // Safety: ensure target is inside the baseOutput folder using path.relative
+    const rel = path.relative(baseResolved, target);
+    if (rel.startsWith('..') || path.isAbsolute(rel)) {
+      return res.status(400).json({ error: 'Invalid path (outside baseOutput)', details: { rel } });
+    }
+
+    // Check exists first for clearer error and return directory listing for debugging
+    const exists = await fs.promises
+      .access(target, fs.constants.F_OK)
+      .then(() => true)
+      .catch(() => false);
+
+    if (!exists) {
+      const dir = path.dirname(target);
+      const files = await fs.promises.readdir(dir).catch(() => []);
+      console.warn('delete-image not found:', { target, dir, files });
+      return res.status(404).json({ error: 'not found', target, dir, files });
+    }
+
+    await fs.promises.unlink(target);
+
+    // notify SSE subscribers that file was removed (optional)
+    pushEvent('deleted', { path: publicPath });
+
+    return res.json({ success: true, deleted: true, path: publicPath, target });
+  } catch (err) {
+    console.error('delete-image error', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
