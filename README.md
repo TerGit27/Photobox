@@ -47,12 +47,12 @@ SNAP adalah aplikasi photo booth yang dirancang untuk kebutuhan event sekolah, k
 1. Clone repository:
 
    ```bash
-   git clone https://github.com/username/snap
+   git clone https://github.com/HaikalDev27/Photobox.git
    ```
 2. Masuk ke folder proyek:
 
    ```bash
-   cd snap
+   cd Photobox
    ```
 3. Jalankan proyek:
 
