@@ -22,15 +22,22 @@ SNAP adalah aplikasi photo booth yang dirancang untuk kebutuhan event sekolah, k
 ## 📁 Struktur Proyek (Contoh)
 
 ```
-snap/
-├── index.html
-├── style.css
-├── script.js
-├── assets/
-│   ├── templates/
-│   ├── icons/
-│   └── sounds/
-└── README.md
+└── Photobox Multimedia/
+    ├── node_modules
+    ├── public/
+    │   ├── example/
+    │   │   ├── template1.png
+    │   │   └── template2.png
+    │   ├── templates/
+    │   │   ├── template1.png
+    │   │   └── template2.png
+    │   ├── app.js
+    │   ├── index.html
+    │   └── style.css
+    ├── package-lock.json
+    ├── package.json
+    ├── README.md
+    └── server.js
 ```
 
 ---
