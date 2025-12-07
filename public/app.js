@@ -1,6 +1,6 @@
-const templates = ["template1.png", "template2.png"];
-const example = ["template1.png", "template2.png"];
-const templateTitles = ["Vintage Film", "Retro Wave"];
+const templates = ["template (1).png", "template (2).png", "template (3).png", "template (4).png", "template (5).png", "template (6).png", "template (7).png", "template (8).png",  "template (9).png"];
+const example = ["template (1).png", "template (2).png", "template (3).png", "template (4).png", "template (5).png", "template (6).png", "template (7).png", "template (8).png",  "template (9).png"];
+const templateTitles = ["Strawberry Delight", "Cute Vintage", "Apple Blossom", "Blueberry Dream", "Ocean Breeze", "Scrapbook Chic", "Red Velvet", "Spiderman Fun", "Floral Fantasy"];
 let currentIndex = 0;
 let selectedTemplate = templates[0];
 
@@ -14,6 +14,8 @@ const exampleStack = document.getElementById("exampleStack");
 const backBtn = document.getElementById("backBtn");
 const startBtn = document.getElementById("startBtn");
 const Timer = document.getElementById("fiveMinTimer");
+const previous = document.getElementById("prev");
+const next = document.getElementById("next");
 
 const cameraVideo = document.getElementById("camera");
 const currentTemplateName = document.getElementById("currentTemplateName");
@@ -31,12 +33,14 @@ startBtn.onclick = () => {
   document.querySelector(".main-menu").classList.add("hidden");
   stageTemplate.classList.remove("hidden");
   Timer.classList.remove("hidden");
-  startTimer(300, true);
+  startTimer(330, true);
 };
 
 function showCarousel(i){
   currentIndex = (i + templates.length) % templates.length;
   carouselImg.src = "example/" + example[currentIndex];
+  previous.src = "templates/" + templates[(currentIndex - 1 + templates.length) % templates.length];
+  next.src = "templates/" + templates[(currentIndex + 1) % templates.length];
   selectedTemplate = "templates/" + templates[currentIndex];
   renderExampleUsage(selectedTemplate);
 }
@@ -47,7 +51,7 @@ function renderExampleUsage(templatePath){
   exampleStack.innerHTML = "";
   for(let k=0;k<3;k++){
     const box = document.createElement("div");
-    box.style.width="140px"; box.style.height="200px"; box.style.position="relative";
+    box.style.width="133px"; box.style.height="225px"; box.style.position="relative";
     box.style.borderRadius="8px"; box.style.overflow="hidden"; box.style.background="#222";
     const bg = document.createElement("div");
     bg.style.width="100%"; bg.style.height="100%"; bg.style.background=`linear-gradient(180deg,#444,#111)`;
@@ -173,15 +177,38 @@ function captureImage(){
 async function mergeImages(listOfBase64, overlaySrc){
   const canvas = document.createElement("canvas");
   canvas.width = 1280;
-  canvas.height = 720 * 3;
+  canvas.height = 2160;
   const ctx = canvas.getContext("2d");
 
-  for(let i=0;i<3;i++){
+  const num = 3;
+  const paddingX = 109;
+  const paddingTop = 80;
+  const paddingBottom = 43;
+  const BottomSpacing = 148;
+  const gapBetween = 45;
+
+  const availableHeight = canvas.height - paddingTop - paddingBottom - BottomSpacing - gapBetween * (num - 1);
+  const slotH = availableHeight / num;
+  const slotW = canvas.width - paddingX * 2;
+
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < num; i++) {
     const img = await loadImage(listOfBase64[i]);
-    ctx.drawImage(img, 0, 720 * i, 1280, 720);
+    const scale = Math.min(slotW / img.width, slotH / img.height);
+    const drawW = Math.round(img.width * scale);
+    const drawH = Math.round(img.height * scale);
+
+    const x = Math.round(paddingX + (slotW - drawW) / 2);
+    const y = Math.round(paddingTop + i * (slotH + gapBetween) + (slotH - drawH) / 2);
+
+    ctx.drawImage(img, x, y, drawW, drawH);
   }
+
   const overlay = await loadImage(overlaySrc);
   ctx.drawImage(overlay, 0, 0, canvas.width, canvas.height);
+
   return canvas.toDataURL("image/png");
 }
 
@@ -213,6 +240,21 @@ captureBtn.onclick = async ()=>{
   previewPopup.classList.remove("hidden");
   captureBtn.disabled = false;
 };
+
+document.addEventListener("keydown", (e)=>{
+  const isSpace = e.code === "Space" || e.key === " " || e.key === "Spacebar";
+  if (!isSpace) return;
+
+  const target = e.target;
+  const tag = target && target.tagName ? target.tagName.toLowerCase() : "";
+  const isEditable = (target && (target.isContentEditable)) || tag === "input" || tag === "textarea" || (target && target.getAttribute && target.getAttribute("role") === "textbox");
+  if (isEditable) return;
+
+  e.preventDefault();
+  if (captureBtn && !captureBtn.disabled) {
+    captureBtn.click();
+  }
+});
 
 saveBtn.onclick = async ()=>{
   try {
@@ -270,14 +312,12 @@ function addSavedItem(publicPath, filename, dateFolder){
     if(!confirm("Hapus file dari disk?")) return;
     del.disabled = true;
     try {
-      // ensure we send only the pathname (e.g. /saved/2025-12-01/file.png)
       let sendPath = publicPath;
       try {
-        // if publicPath is absolute URL, extract pathname
         const u = new URL(publicPath, window.location.href);
         sendPath = u.pathname;
       } catch (e) {
-        // ignore and use raw string
+        console.warn("Invalid URL for path:", publicPath);
       }
 
       const res = await fetch("/delete-image", {

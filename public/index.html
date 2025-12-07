@@ -9,7 +9,7 @@
 <body>
 
   <div class="main-menu">
-    <img src="" alt="Logo SNAP" class="logo" />
+    <img src="./SNAP.png" alt="Logo SNAP" class="logo" />
     <button id="startBtn" class="big">Mulai Sesi</button>
   </div>
 
@@ -21,11 +21,13 @@
     <h1 class="title">Silahkan Pilih Template</h1>
 
     <div class="carousel">
+      <img id="prev" src="templates/template (9).png" alt="">
       <button id="prevBtn" class="nav-btn">◀</button>
       <div class="carousel-view">
         <img id="carouselImg" src="templates/template1.png" alt="template preview" />
       </div>
       <button id="nextBtn" class="nav-btn">▶</button>
+      <img id="next" src="templates/template (2).png" alt="">
     </div>
 
     <div class="template-actions">
@@ -76,5 +78,9 @@
     &copy; 2025 Multimedia SCADA - All rights reserved.
   </footer>
   <script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
 </body>
 </html>
